@@ -93,12 +93,28 @@ mod tests {
         });
     }
 
-    fn hashmap<S: BuildHasher>(hasher: S, b: &mut Bencher) {
+    // can't use a generic function because statics aren't monomorphized
+    macro_rules! hashmap_lazy_static {
+        ($hasher:ty, $b:ident) => {
+            lazy_static::lazy_static! {
+                static ref MAP: HashMap<&'static [u8], &'static str, $hasher> = {
+                    make_hashmap::<$hasher>()
+                };
+            }
+
+            hashmap_lookup(MAP.deref(), $b);
+        }
+    }
+
+    fn make_hashmap<S: BuildHasher + Default>() -> HashMap<&'static [u8], &'static str, S> {
+        let mut map = HashMap::with_capacity_and_hasher(ENTITIES.len(), S::default());
+        map.extend(ENTITIES.iter().cloned());
+        map
+    }
+
+    fn hashmap_lookup<S: BuildHasher>(map: &HashMap<&'static [u8], &'static str, S>, b: &mut Bencher) {
         let samples = samples();
         let samples = &samples;
-        let mut map = HashMap::with_capacity_and_hasher(ENTITIES.len(), hasher);
-        map.extend(ENTITIES.iter().cloned());
-        let map = &map;
         b.iter(|| for sample in samples {
             test::black_box(map.get(&sample.deref()));
         });
@@ -106,17 +122,35 @@ mod tests {
 
     #[bench]
     fn hashmap_siphash(b: &mut Bencher) {
-        hashmap(RandomState::new(), b)
+        let map = make_hashmap::<RandomState>();
+        hashmap_lookup(&map, b);
     }
 
     #[bench]
     fn hashmap_seahash(b: &mut Bencher) {
-        hashmap(BuildHasherDefault::<SeaHasher>::default(), b);
+        let map = make_hashmap::<BuildHasherDefault<SeaHasher>>();
+        hashmap_lookup(&map, b);
     }
 
     #[bench]
     fn hashmap_fnv(b: &mut Bencher) {
-        hashmap(FnvBuildHasher::default(), b);
+        let map = make_hashmap::<FnvBuildHasher>();
+        hashmap_lookup(&map, b);
+    }
+
+    #[bench]
+    fn hashmap_siphash_lazy_static(b: &mut Bencher) {
+        hashmap_lazy_static!(RandomState, b);
+    }
+
+    #[bench]
+    fn hashmap_seahash_lazy_static(b: &mut Bencher) {
+        hashmap_lazy_static!(BuildHasherDefault::<SeaHasher>, b);
+    }
+
+    #[bench]
+    fn hashmap_fnv_lazy_static(b: &mut Bencher) {
+        hashmap_lazy_static!(FnvBuildHasher, b);
     }
 
     #[bench]
