@@ -139,6 +139,24 @@ mod tests {
             test::black_box(ENTITIES_PHF.get(sample));
         });
     }
+
+    #[bench]
+    fn x_create_hashmap_fnv(b: &mut Bencher) {
+        b.iter(|| {
+            let mut map = HashMap::with_capacity_and_hasher(ENTITIES.len(), FnvBuildHasher::default());
+            map.extend(ENTITIES.iter().cloned());
+            map
+        })
+    }
+
+    #[bench]
+    fn x_create_hashmap_siphash(b: &mut Bencher) {
+        b.iter(|| {
+            let mut map = HashMap::with_capacity_and_hasher(ENTITIES.len(), RandomState::new());
+            map.extend(ENTITIES.iter().cloned());
+            map
+        })
+    }
 }
 
 fn main() {
