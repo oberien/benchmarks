@@ -1,0 +1,15 @@
+[package]
+name = "static-table-lookup"
+version = "0.1.0"
+authors = ["oberien <jaro.fietz@gmx.de>"]
+edition = "2018"
+
+[dependencies]
+
+[dev-dependencies]
+rand = "0.6.5"
+rand_xoshiro = "0.1.0"
+eytzinger = "1.0.1"
+phf = { version = "0.7.24", features = ["macros"] }
+seahash = "3.0.6"
+fnv = "1.0.6"

@@ -1,0 +1,8 @@
+[package]
+name = "fork-benchmark"
+version = "0.1.0"
+authors = ["oberien <jaro.fietz@gmx.de>"]
+edition = "2018"
+
+[dependencies]
+libc = "*"
